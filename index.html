@@ -174,6 +174,7 @@
       max-width: 100%;
       max-height: 50px;
       object-fit: contain;
+      pointer-events: none; /* Evita interferencias en el arrastre */
     }
 
     .drop-zone {
@@ -376,21 +377,28 @@
       startTimer();
     }
 
-    function dragStart(e) { e.dataTransfer.setData('text/plain', e.target.id); }
-    function dragOver(e) { e.preventDefault(); }
+    function dragStart(e) {
+      const card = e.target.closest('.draggable-card');
+      if (card) {
+        e.dataTransfer.setData('text/plain', card.id);
+      }
+    }
+
+    function dragOver(e) {
+      e.preventDefault();
+    }
 
     function drop(e) {
       e.preventDefault();
       const cardId = e.dataTransfer.getData('text/plain');
       const card = document.getElementById(cardId);
       
-      let dropTarget = e.target;
-      if (!dropTarget.classList.contains('drop-zone-target')) {
-        dropTarget = dropTarget.closest('.drop-zone-target');
-      }
+      let dropTarget = e.target.closest('.drop-zone-target');
 
-      if (dropTarget && dropTarget.children.length === 0) {
-        dropTarget.appendChild(card);
+      if (dropTarget && card) {
+        if (dropTarget.children.length === 0) {
+          dropTarget.appendChild(card);
+        }
       }
     }
 
