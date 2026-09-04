@@ -24,15 +24,39 @@
       align-items: center;
     }
 
+    .header-student {
+      background-color: #ffffff;
+      border: 1px solid #ddd;
+      border-left: 5px solid var(--primary);
+      padding: 10px 20px;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 940px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .header-student h2 {
+      margin: 0 0 5px 0;
+      font-size: 1.1em;
+      color: #0056b3;
+    }
+
+    .header-student p {
+      margin: 2px 0;
+      font-size: 0.9em;
+      color: #555;
+    }
+
     h1 {
       margin-bottom: 5px;
       color: #333;
     }
 
     .subtitle {
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       color: #666;
-      font-size: 0.9em;
+      font-size: 0.95em;
     }
 
     .mode-selector {
@@ -51,15 +75,21 @@
       transition: background 0.2s;
     }
 
-    .btn:hover {
-      background-color: #ddd;
-    }
-
+    .btn:hover { background-color: #ddd; }
     .btn.active {
       background-color: var(--primary);
       color: #fff;
       border-color: #004085;
     }
+
+    .btn-start {
+      background-color: var(--success);
+      color: white;
+      border: none;
+      font-size: 14px;
+      padding: 8px 20px;
+    }
+    .btn-start:hover { background-color: #218838; }
 
     .top-bar {
       display: flex;
@@ -100,6 +130,14 @@
       width: 100%;
       max-width: 980px;
       justify-content: center;
+      opacity: 0.5;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .game-board.active {
+      opacity: 1;
+      pointer-events: auto;
     }
 
     .column {
@@ -130,14 +168,12 @@
       user-select: none;
     }
 
-    .draggable-card:active {
-      cursor: grabbing;
-    }
+    .draggable-card:active { cursor: grabbing; }
 
-    .draggable-card svg {
-      width: 100%;
-      height: 100%;
+    .draggable-card img {
+      max-width: 100%;
       max-height: 50px;
+      object-fit: contain;
     }
 
     .drop-zone {
@@ -149,7 +185,6 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 10px;
-      position: relative;
     }
 
     .drop-zone .zone-label {
@@ -198,7 +233,6 @@
       width: 90%;
     }
 
-    .modal-content h3 { margin-top: 0; }
     .close-btn {
       float: right;
       cursor: pointer;
@@ -209,8 +243,14 @@
 </head>
 <body>
 
-  <h1>Simbología Eléctrica: Accionamientos Eléctricos</h1>
-  <div class="subtitle">Asocia los símbolos gráficos con sus nombres según la norma seleccionada</div>
+  <!-- Datos del Alumno -->
+  <div class="header-student">
+    <h2>Alumno: Valderrama Zeballos Jesús Alejandro</h2>
+    <p><strong>Asignatura:</strong> Accionamientos Eléctricos | <strong>Tema:</strong> Simbología Eléctrica (NEMA vs IEC)</p>
+  </div>
+
+  <h1>Juego Interactivo de Simbología Eléctrica</h1>
+  <div class="subtitle">Selecciona la norma y presiona <strong>Comenzar Juego</strong> para iniciar el temporizador</div>
 
   <div class="mode-selector">
     <button class="btn active" id="btn-iec" onclick="switchMode('IEC')">Modo IEC</button>
@@ -218,6 +258,7 @@
   </div>
 
   <div class="top-bar">
+    <button class="btn btn-start" id="btn-start" onclick="startGame()">▶ Comenzar Juego</button>
     <div class="timer-container">
       <div class="timer-bar-bg">
         <div class="timer-bar-fill" id="timer-bar"></div>
@@ -229,7 +270,7 @@
     <button class="btn" onclick="openHelp()">Ayuda</button>
   </div>
 
-  <div class="game-board">
+  <div class="game-board" id="game-board">
     <div class="column" id="symbols-column">
       <div class="col-title">Símbolos</div>
     </div>
@@ -244,50 +285,47 @@
     <div class="modal-content">
       <span class="close-btn" onclick="closeHelp()">&times;</span>
       <h3>Instrucciones del Juego</h3>
-      <p>1. Selecciona la norma técnica con la que deseas practicar (<strong>IEC</strong> o <strong>NEMA</strong>).</p>
-      <p>2. Arrastra cada símbolo gráfico desde la columna izquierda y suéltalo dentro del recuadro a la derecha correspondiente.</p>
-      <p>3. Tienes un límite de <strong>1 minuto</strong> para completar los 10 símbolos.</p>
-      <p>4. Haz clic en <strong>Comprobar</strong> para verificar tus respuestas.</p>
+      <p>1. Selecciona la norma con la que deseas practicar (<strong>IEC</strong> o <strong>NEMA</strong>).</p>
+      <p>2. Presiona el botón verde <strong>Comenzar Juego</strong> para activar las tarjetas e iniciar el contador de 1 minuto.</p>
+      <p>3. Arrastra cada símbolo gráfico desde la izquierda y suéltalo en la casilla vacía correspondiente de la derecha.</p>
+      <p>4. Haz clic en <strong>Comprobar</strong> para evaluar tu resultado.</p>
     </div>
   </div>
 
   <script>
     const symbolsData = {
       IEC: [
-        { id: 'm1', name: 'Motor trifásico', svg: '<svg viewBox="0 0 100 50"><circle cx="50" cy="25" r="18" fill="none" stroke="#000" stroke-width="2"/><text x="43" y="28" font-size="12" font-weight="bold">M</text><text x="43" y="38" font-size="8">3~</text><line x1="10" y1="25" x2="32" y2="25" stroke="#000" stroke-width="2"/><line x1="68" y1="25" x2="90" y2="25" stroke="#000" stroke-width="2"/></svg>' },
-        { id: 'm2', name: 'Contactor trifásico', svg: '<svg viewBox="0 0 100 50"><line x1="20" y1="5" x2="20" y2="45" stroke="#000" stroke-width="1.5"/><line x1="50" y1="5" x2="50" y2="45" stroke="#000" stroke-width="1.5"/><line x1="80" y1="5" x2="80" y2="45" stroke="#000" stroke-width="1.5"/><line x1="10" y1="15" x2="90" y2="15" stroke="#000" stroke-width="1.5"/><rect x="42" y="28" width="16" height="14" fill="none" stroke="#000" stroke-width="1.5"/></svg>' },
-        { id: 'm3', name: 'Relevador de sobrecarga (Thermal Relay)', svg: '<svg viewBox="0 0 100 50"><rect x="30" y="15" width="40" height="20" fill="none" stroke="#000" stroke-width="2"/><line x1="10" y1="25" x2="30" y2="25" stroke="#000" stroke-width="2"/><line x1="70" y1="25" x2="90" y2="25" stroke="#000" stroke-width="2"/><path d="M 40 20 L 50 30 L 60 20" fill="none" stroke="#000" stroke-width="1.5"/></svg>' },
-        { id: 'm4', name: 'Disyuntor contra cortocircuito', svg: '<svg viewBox="0 0 100 50"><line x1="10" y1="25" x2="35" y2="25" stroke="#000" stroke-width="2"/><line x1="65" y1="25" x2="90" y2="25" stroke="#000" stroke-width="2"/><line x1="35" y1="25" x2="65" y2="10" stroke="#000" stroke-width="2"/><rect x="45" y="5" width="10" height="10" fill="none" stroke="#000" stroke-width="1.5"/></svg>' },
-        { id: 'm5', name: 'Transformador de tensión', svg: '<svg viewBox="0 0 100 50"><circle cx="40" cy="25" r="15" fill="none" stroke="#000" stroke-width="2"/><circle cx="60" cy="25" r="15" fill="none" stroke="#000" stroke-width="2"/></svg>' },
-        { id: 'm6', name: 'Interruptor de pedal normalmente cerrado', svg: '<svg viewBox="0 0 100 50"><line x1="10" y1="25" x2="35" y2="25" stroke="#000" stroke-width="2"/><line x1="65" y1="25" x2="90" y2="25" stroke="#000" stroke-width="2"/><line x1="35" y1="12" x2="65" y2="12" stroke="#000" stroke-width="2"/><line x1="35" y1="25" x2="35" y2="12" stroke="#000" stroke-width="2"/><path d="M 40 12 L 40 5 L 60 5" fill="none" stroke="#000" stroke-width="1.5"/></svg>' },
-        { id: 'm7', name: 'Interruptor de posición normalmente cerrado (Limit Switch)', svg: '<svg viewBox="0 0 100 50"><line x1="10" y1="25" x2="35" y2="25" stroke="#000" stroke-width="2"/><line x1="65" y1="25" x2="90" y2="25" stroke="#000" stroke-width="2"/><line x1="35" y1="12" x2="65" y2="12" stroke="#000" stroke-width="2"/><line x1="35" y1="25" x2="35" y2="12" stroke="#000" stroke-width="2"/><polygon points="45,12 55,12 50,4" fill="#000"/></svg>' },
-        { id: 'm8', name: 'Interruptor que actúa por efecto térmico N.A.', svg: '<svg viewBox="0 0 100 50"><line x1="10" y1="25" x2="35" y2="25" stroke="#000" stroke-width="2"/><line x1="65" y1="25" x2="90" y2="25" stroke="#000" stroke-width="2"/><line x1="35" y1="25" x2="65" y2="12" stroke="#000" stroke-width="2"/><path d="M 42 18 C 45 22, 50 22, 53 18" stroke="#000" stroke-width="1.5" fill="none"/></svg>' },
-        { id: 'm9', name: 'Relé con temporización a la desconexión', svg: '<svg viewBox="0 0 100 50"><rect x="30" y="10" width="40" height="30" fill="none" stroke="#000" stroke-width="2"/><line x1="30" y1="10" x2="70" y2="40" stroke="#000" stroke-width="1.5"/><line x1="10" y1="25" x2="30" y2="25" stroke="#000" stroke-width="2"/><line x1="70" y1="25" x2="90" y2="25" stroke="#000" stroke-width="2"/></svg>' },
-        { id: 'm10', name: 'Contacto temporizado al accionamiento', svg: '<svg viewBox="0 0 100 50"><line x1="10" y1="25" x2="35" y2="25" stroke="#000" stroke-width="2"/><line x1="65" y1="25" x2="90" y2="25" stroke="#000" stroke-width="2"/><line x1="35" y1="25" x2="65" y2="12" stroke="#000" stroke-width="2"/><path d="M 50 18 A 8 8 0 0 0 50 8" fill="none" stroke="#000" stroke-width="1.5"/></svg>' }
+        { id: 'm1', name: 'Motor trifásico', img: 'img/iec_motor.png' },
+        { id: 'm2', name: 'Contactor trifásico', img: 'img/iec_contactor.png' },
+        { id: 'm3', name: 'Relevador de sobrecarga (Thermal Relay)', img: 'img/iec_sobrecarga.png' },
+        { id: 'm4', name: 'Disyuntor contra cortocircuito', img: 'img/iec_disyuntor.png' },
+        { id: 'm5', name: 'Transformador de tensión', img: 'img/iec_trafo.png' },
+        { id: 'm6', name: 'Interruptor de pedal normalmente cerrado', img: 'img/iec_pedal_nc.png' },
+        { id: 'm7', name: 'Interruptor de posición normalmente cerrado (Limit Switch)', img: 'img/iec_limit_nc.png' },
+        { id: 'm8', name: 'Interruptor que actúa por efecto térmico N.A.', img: 'img/iec_termico_na.png' },
+        { id: 'm9', name: 'Relé con temporización a la desconexión', img: 'img/iec_rele_offdelay.png' },
+        { id: 'm10', name: 'Contacto temporizado al accionamiento', img: 'img/iec_contacto_ondelay.png' }
       ],
       NEMA: [
-        { id: 'm1', name: 'Motor trifásico', svg: '<svg viewBox="0 0 100 50"><circle cx="50" cy="25" r="18" fill="none" stroke="#000" stroke-width="2"/><text x="35" y="30" font-size="11" font-weight="bold">MOT</text></svg>' },
-        { id: 'm2', name: 'Contactor trifásico', svg: '<svg viewBox="0 0 100 50"><line x1="20" y1="10" x2="20" y2="40" stroke="#000" stroke-width="2"/><line x1="50" y1="10" x2="50" y2="40" stroke="#000" stroke-width="2"/><line x1="80" y1="10" x2="80" y2="40" stroke="#000" stroke-width="2"/><line x1="10" y1="25" x2="90" y2="25" stroke="#000" stroke-dasharray="3" stroke-width="1.5"/></svg>' },
-        { id: 'm3', name: 'Relevador de sobrecarga (Thermal Relay)', svg: '<svg viewBox="0 0 100 50"><path d="M 10 25 L 30 25 Q 40 10 50 25 T 70 25 L 90 25" stroke="#000" stroke-width="2" fill="none"/><text x="43" y="42" font-size="10" font-weight="bold">OL</text></svg>' },
-        { id: 'm4', name: 'Disyuntor contra cortocircuito', svg: '<svg viewBox="0 0 100 50"><line x1="10" y1="25" x2="35" y2="25" stroke="#000" stroke-width="2"/><line x1="65" y1="25" x2="90" y2="25" stroke="#000" stroke-width="2"/><circle cx="35" cy="25" r="3" fill="#000"/><circle cx="65" cy="25" r="3" fill="#000"/><path d="M 35 25 Q 50 10 65 25" stroke="#000" stroke-width="2" fill="none"/><text x="43" y="42" font-size="9" font-weight="bold">CB</text></svg>' },
-        { id: 'm5', name: 'Transformador de tensión', svg: '<svg viewBox="0 0 100 50"><path d="M 10 18 C 25 5, 25 45, 40 25 C 55 5, 55 45, 70 25" stroke="#000" stroke-width="2" fill="none"/><line x1="10" y1="32" x2="90" y2="32" stroke="#000" stroke-width="1.5"/></svg>' },
-        { id: 'm6', name: 'Interruptor de pedal normalmente cerrado', svg: '<svg viewBox="0 0 100 50"><line x1="10" y1="25" x2="40" y2="25" stroke="#000" stroke-width="2"/><line x1="60" y1="25" x2="90" y2="25" stroke="#000" stroke-width="2"/><line x1="40" y1="12" x2="40" y2="38" stroke="#000" stroke-width="2"/><line x1="60" y1="12" x2="60" y2="38" stroke="#000" stroke-width="2"/><line x1="30" y1="38" x2="70" y2="12" stroke="#000" stroke-width="2"/><path d="M 50 12 L 50 4" stroke="#000" stroke-width="1.5"/></svg>' },
-        { id: 'm7', name: 'Interruptor de posición normalmente cerrado (Limit Switch)', svg: '<svg viewBox="0 0 100 50"><line x1="10" y1="25" x2="40" y2="25" stroke="#000" stroke-width="2"/><line x1="60" y1="25" x2="90" y2="25" stroke="#000" stroke-width="2"/><line x1="40" y1="12" x2="40" y2="38" stroke="#000" stroke-width="2"/><line x1="60" y1="12" x2="60" y2="38" stroke="#000" stroke-width="2"/><line x1="30" y1="38" x2="70" y2="12" stroke="#000" stroke-width="2"/><text x="42" y="48" font-size="8" font-weight="bold">LS</text></svg>' },
-        { id: 'm8', name: 'Interruptor que actúa por efecto térmico N.A.', svg: '<svg viewBox="0 0 100 50"><line x1="10" y1="25" x2="40" y2="25" stroke="#000" stroke-width="2"/><line x1="60" y1="25" x2="90" y2="25" stroke="#000" stroke-width="2"/><line x1="40" y1="12" x2="40" y2="38" stroke="#000" stroke-width="2"/><line x1="60" y1="12" x2="60" y2="38" stroke="#000" stroke-width="2"/><text x="43" y="10" font-size="9" font-weight="bold">t°</text></svg>' },
-        { id: 'm9', name: 'Relé con temporización a la desconexión', svg: '<svg viewBox="0 0 100 50"><circle cx="50" cy="25" r="16" fill="none" stroke="#000" stroke-width="2"/><text x="35" y="28" font-size="9" font-weight="bold">TOFF</text></svg>' },
-        { id: 'm10', name: 'Contacto temporizado al accionamiento', svg: '<svg viewBox="0 0 100 50"><line x1="10" y1="25" x2="40" y2="25" stroke="#000" stroke-width="2"/><line x1="60" y1="25" x2="90" y2="25" stroke="#000" stroke-width="2"/><line x1="40" y1="12" x2="40" y2="38" stroke="#000" stroke-width="2"/><line x1="60" y1="12" x2="60" y2="38" stroke="#000" stroke-width="2"/><path d="M 40 8 L 50 15 L 60 8" fill="none" stroke="#000" stroke-width="1.5"/></svg>' }
+        { id: 'm1', name: 'Motor trifásico', img: 'img/nema_motor.png' },
+        { id: 'm2', name: 'Contactor trifásico', img: 'img/nema_contactor.png' },
+        { id: 'm3', name: 'Relevador de sobrecarga (Thermal Relay)', img: 'img/nema_sobrecarga.png' },
+        { id: 'm4', name: 'Disyuntor contra cortocircuito', img: 'img/nema_disyuntor.png' },
+        { id: 'm5', name: 'Transformador de tensión', img: 'img/nema_trafo.png' },
+        { id: 'm6', name: 'Interruptor de pedal normalmente cerrado', img: 'img/nema_pedal_nc.png' },
+        { id: 'm7', name: 'Interruptor de posición normalmente cerrado (Limit Switch)', img: 'img/nema_limit_nc.png' },
+        { id: 'm8', name: 'Interruptor que actúa por efecto térmico N.A.', img: 'img/nema_termico_na.png' },
+        { id: 'm9', name: 'Relé con temporización a la desconexión', img: 'img/nema_rele_offdelay.png' },
+        { id: 'm10', name: 'Contacto temporizado al accionamiento', img: 'img/nema_contacto_ondelay.png' }
       ]
     };
 
     let currentMode = 'IEC';
     let timeLeft = 60;
     let timerInterval = null;
+    let gameStarted = false;
 
-    function initGame() {
-      clearInterval(timerInterval);
-      timeLeft = 60;
-      updateTimerUI();
-
+    function buildBoard() {
       const symbolsCol = document.getElementById('symbols-column');
       const targetsCol = document.getElementById('targets-column');
 
@@ -295,7 +333,6 @@
       targetsCol.innerHTML = '<div class="col-title">Nombres de Componentes</div>';
 
       const currentList = [...symbolsData[currentMode]];
-      
       const shuffledSymbols = [...currentList].sort(() => Math.random() - 0.5);
       const shuffledTargets = [...currentList].sort(() => Math.random() - 0.5);
 
@@ -305,7 +342,7 @@
         card.draggable = true;
         card.id = `symbol-${item.id}`;
         card.dataset.id = item.id;
-        card.innerHTML = item.svg;
+        card.innerHTML = `<img src="${item.img}" alt="${item.name}" onerror="this.src='https://via.placeholder.com/80x40?text=S%C3%ADmbolo'">`;
 
         card.addEventListener('dragstart', dragStart);
         symbolsCol.appendChild(card);
@@ -329,17 +366,18 @@
         zone.appendChild(targetBox);
         targetsCol.appendChild(zone);
       });
+    }
 
+    function startGame() {
+      if (gameStarted) return;
+      gameStarted = true;
+      document.getElementById('game-board').classList.add('active');
+      document.getElementById('btn-start').style.display = 'none';
       startTimer();
     }
 
-    function dragStart(e) {
-      e.dataTransfer.setData('text/plain', e.target.id);
-    }
-
-    function dragOver(e) {
-      e.preventDefault();
-    }
+    function dragStart(e) { e.dataTransfer.setData('text/plain', e.target.id); }
+    function dragOver(e) { e.preventDefault(); }
 
     function drop(e) {
       e.preventDefault();
@@ -357,12 +395,16 @@
     }
 
     function startTimer() {
+      clearInterval(timerInterval);
+      timeLeft = 60;
+      updateTimerUI();
+
       timerInterval = setInterval(() => {
         timeLeft--;
         updateTimerUI();
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
-          alert('¡Tiempo agotado! Haz clic en Restaurar para volver a intentarlo.');
+          alert('¡Tiempo agotado! Presiona Restaurar para volver a intentarlo.');
         }
       }, 1000);
     }
@@ -370,30 +412,25 @@
     function updateTimerUI() {
       const fill = document.getElementById('timer-bar');
       const text = document.getElementById('timer-text');
-      const percentage = (timeLeft / 60) * 100;
-      fill.style.width = `${percentage}%`;
+      fill.style.width = `${(timeLeft / 60) * 100}%`;
       text.textContent = `${timeLeft} s`;
 
-      if (timeLeft > 30) {
-        fill.style.backgroundColor = 'var(--success)';
-      } else if (timeLeft > 10) {
-        fill.style.backgroundColor = '#ffc107';
-      } else {
-        fill.style.backgroundColor = 'var(--danger)';
-      }
+      if (timeLeft > 30) fill.style.backgroundColor = 'var(--success)';
+      else if (timeLeft > 10) fill.style.backgroundColor = '#ffc107';
+      else fill.style.backgroundColor = 'var(--danger)';
     }
 
     function switchMode(mode) {
       currentMode = mode;
       document.getElementById('btn-iec').classList.toggle('active', mode === 'IEC');
       document.getElementById('btn-nema').classList.toggle('active', mode === 'NEMA');
-      initGame();
+      resetGame();
     }
 
     function checkAnswers() {
+      if (!gameStarted) return alert('Debes presionar "Comenzar Juego" primero.');
       const dropZones = document.querySelectorAll('.drop-zone');
       let correct = 0;
-      let total = dropZones.length;
 
       dropZones.forEach(zone => {
         const expectedId = zone.dataset.expectedId;
@@ -408,27 +445,28 @@
         }
       });
 
-      if (correct === total) {
+      if (correct === dropZones.length) {
         clearInterval(timerInterval);
-        alert('¡Enhorabuena! Los símbolos han sido asociados correctamente.');
+        alert('¡Enhorabuena! Todos los símbolos han sido asociados correctamente.');
       } else {
-        alert(`Has asociado correctamente ${correct} de ${total} símbolos. Revisa los marcados en rojo.`);
+        alert(`Has asociado correctamente ${correct} de ${dropZones.length} símbolos.`);
       }
     }
 
     function resetGame() {
-      initGame();
+      clearInterval(timerInterval);
+      gameStarted = false;
+      timeLeft = 60;
+      updateTimerUI();
+      document.getElementById('game-board').classList.remove('active');
+      document.getElementById('btn-start').style.display = 'inline-block';
+      buildBoard();
     }
 
-    function openHelp() {
-      document.getElementById('help-modal').style.display = 'flex';
-    }
+    function openHelp() { document.getElementById('help-modal').style.display = 'flex'; }
+    function closeHelp() { document.getElementById('help-modal').style.display = 'none'; }
 
-    function closeHelp() {
-      document.getElementById('help-modal').style.display = 'none';
-    }
-
-    window.onload = initGame;
+    window.onload = buildBoard;
   </script>
 </body>
 </html>
